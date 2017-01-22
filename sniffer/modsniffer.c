@@ -9,12 +9,10 @@
 #include "user_interface.h"
 #include "py/runtime.h"
 #include "py/mphal.h"
-
-//add printf functionality
 #include "py/obj.h"
 #include "py/objstr.h"
 
-
+//defining our callback function reference variable (pyCallback) and function [pyCallbackFunction(*buf,len)] to account for the C to Python interface
 mp_obj_t pyCallback = mp_const_none;
 void pyCallbackFunction(uint8 *buf, uint16 len){
     if(mp_obj_is_callable(pyCallback)){
@@ -46,7 +44,10 @@ STATIC mp_obj_t s_Sniffer(mp_obj_t func) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(s_Sniffer_obj, s_Sniffer);
 
-//Change current channel (to sweep while listening -- recommended in environments with multiple routers) (1-14 typical, though 12-14 are reserved in NA)
+
+
+//Change current channel (to enable sweeping while listening -- recommended in environments with multiple routers which may use multiple/alternate channels)
+//Channels 1-14 allowed, though 12-14 are reserved in NA
 STATIC mp_obj_t s_channel(mp_uint_t n_args, const mp_obj_t *args) {
     if (n_args == 0) {
         return mp_obj_new_int(wifi_get_channel());
@@ -58,6 +59,8 @@ STATIC mp_obj_t s_channel(mp_uint_t n_args, const mp_obj_t *args) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(s_channel_obj, 1, 14, s_channel);
 
 
+
+//define the functions and whatnot
 STATIC const mp_map_elem_t mp_module_sniffer_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_sniff) },
 
