@@ -24,9 +24,10 @@ void pyCallbackFunction(uint8 *buf, uint16 len){
     }
 }
 
-//Promiscuous Mode -- sniff.Sniffer( cb_handler() ) -the packets are sent to this function for processing (as a byte array)
+//sniff.Sniffer( cb_handler() ) -the packets are sent to this function for processing (as a byte array)
 STATIC mp_obj_t s_Sniffer(mp_obj_t func) {
     //clear connection first, and set op mode to station
+    wifi_station_disconnect();
     wifi_set_opmode(STATION_MODE);
 
     //make sure its actually off before its started 
@@ -60,13 +61,51 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(s_channel_obj, 1, 14, s_channel);
 
 
 
-//define the functions and whatnot
+
+
+//*********************************************************************************************
+//Direct interfaces to several promiscuous mode or related methods from the ESP8266 NON-OS SDK.
+// sniff.prommode(0=disable,1=enable): wifi_promiscuous_enable(int)
+//
+// sniff.station(): sets the wifi operation mode to station mode
+//
+// sniff.disc(): disconnects the wifi station (needs to be done before enabling the sniffer) 
+//*********************************************************************************************
+
+STATIC mp_obj_t s_prommode(mp_uint_t n_args, const mp_obj_t *args) {
+	if (n_args == 0) {
+		return mp_const_none;
+	}
+	else {
+		wifi_promiscuous_enable(mp_obj_get_int(args[0]));
+		return mp_const_none;
+	}
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(s_prommode_obj, 0, 1, s_prommode);
+
+STATIC mp_obj_t s_station(mp_uint_t n_args, const mp_obj_t *args) {
+	wifi_set_opmode(STATION_MODE);	
+	return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR(s_station_obj,0, s_station);
+
+STATIC mp_obj_t s_disc(mp_uint_t n_args, const mp_obj_t *args) {
+	wifi_station_disconnect();	
+	return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR(s_disc_obj,0, s_disc);
+
+
+
 STATIC const mp_map_elem_t mp_module_sniffer_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_sniff) },
 
-    //allow access to custom functions
+    //allows access to custom functions
     { MP_OBJ_NEW_QSTR(MP_QSTR_Sniffer), (mp_obj_t)&s_Sniffer_obj },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_channel), (mp_obj_t)&s_channel_obj }
+    { MP_OBJ_NEW_QSTR(MP_QSTR_channel), (mp_obj_t)&s_channel_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_prommode), (mp_obj_t)&s_prommode_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_station), (mp_obj_t)&s_station_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_disc), (mp_obj_t)&s_disc_obj }
 };
 
 STATIC MP_DEFINE_CONST_DICT(mp_module_sniffer_globals, mp_module_sniffer_globals_table);
