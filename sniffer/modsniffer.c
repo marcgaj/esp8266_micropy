@@ -28,7 +28,7 @@ void pyCallbackFunction(uint8 *buf, uint16 len){
 STATIC mp_obj_t s_Sniffer(mp_obj_t func) {
     //clear connection first, and set op mode to station
     wifi_station_disconnect();
-    wifi_set_opmode(STATION_MODE);
+    wifi_set_opmode_current(STATION_MODE);
 
     //make sure its actually off before its started 
     wifi_promiscuous_enable(0);
@@ -63,14 +63,18 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(s_channel_obj, 1, 14, s_channel);
 
 
 
-//*********************************************************************************************
-//Direct interfaces to several promiscuous mode or related methods from the ESP8266 NON-OS SDK.
+//***********************************************************************************************
+// Direct interfaces to several promiscuous mode or related methods from the ESP8266 NON-OS SDK.
 // sniff.prommode(0=disable,1=enable): wifi_promiscuous_enable(int)
 //
-// sniff.station(): sets the wifi operation mode to station mode
+// sniff.opmode(_opmode_): sets the wifi operation mode to station mode
+// sniff.opmode\_flash(_opmode_): sets the wifi operation mode and saves the change into the flash memory.
+// opmodes: 0=>Station_Mode
+//          1=>SoftAP_Mode
+//          2=>Station+SoftAP_Mode
 //
 // sniff.disc(): disconnects the wifi station (needs to be done before enabling the sniffer) 
-//*********************************************************************************************
+//***********************************************************************************************
 
 STATIC mp_obj_t s_prommode(mp_uint_t n_args, const mp_obj_t *args) {
 	if (n_args == 0) {
@@ -83,11 +87,17 @@ STATIC mp_obj_t s_prommode(mp_uint_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(s_prommode_obj, 0, 1, s_prommode);
 
-STATIC mp_obj_t s_station(mp_uint_t n_args, const mp_obj_t *args) {
-	wifi_set_opmode(STATION_MODE);	
+STATIC mp_obj_t s_opmode(mp_uint_t n_args, const mp_obj_t *args) {
+	wifi_set_opmode_current(mp_obj_get_int(args[0]+1)&&0x00);	
 	return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR(s_station_obj,0, s_station);
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(s_opmode_obj,0,2, s_opmode);
+
+STATIC mp_obj_t s_opmode_flash(mp_uint_t n_args, const mp_obj_t *args) {
+	wifi_set_opmode_current(mp_obj_get_int(args[0]+1)&&0x00);	
+	return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(s_opmode_flash_obj,0,2, s_opmode_flash);
 
 STATIC mp_obj_t s_disc(mp_uint_t n_args, const mp_obj_t *args) {
 	wifi_station_disconnect();	
